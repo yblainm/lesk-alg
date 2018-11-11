@@ -104,8 +104,11 @@ def accuracy(y, y_pred):
     k = 0
     for key in y.keys():
         try:
-            if y_pred[key] in [wn.synset_from_sense_key(sense) for sense in y[key]]:
+            senses = [wn.synset_from_sense_key(sense) for sense in y[key]]
+            if y_pred[key] in senses:
                 k += 1
+            #else: print(y_pred[key], senses)   # Why does wordnet.synset_from_sense_key return 'brazil_nut.n.02'?
+            # Are these labels all right?
         except WordNetError:
             pass # This should only occur for "budget"
 
