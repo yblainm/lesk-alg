@@ -52,7 +52,7 @@ def load_instances(f):
                 if el.tag == 'instance':
                     my_id = el.attrib['id']
                     lemma = el.attrib['lemma']
-                    pos = el.attrib['pos']
+                    pos = el.attrib['pos'].lower()[0]
                     instances[my_id] = WSDInstance(my_id, lemma, context, i, pos)
     return dev_instances, test_instances
 
@@ -124,6 +124,7 @@ def preprocess_instances(instances):
             if len(token) > 1 and token not in stops:
                 post.append(token.lower())
         inst.context = post
+        # print(post)
 
 
 '''
@@ -143,6 +144,7 @@ def modified_lesk(context_sentence, ambiguous_word, pos=None, synsets=None):
 
     if not synsets:
         return None
+
     try:
         s = []
         for ss in synsets:
@@ -179,6 +181,14 @@ def get_closest_lemma(word):
     return difflib.get_close_matches(word, wn.all_lemma_names())[0]
 
 
+def get_lemma_classifiers(instances, keys):
+	classifiers = {}
+	for inst in instances.values():
+		if inst not in classifiers.keys():
+			pass
+
+
+
 if __name__ == '__main__':
     data_f = 'multilingual-all-words.en.xml'
     key_f = 'wordnet.en.key'
@@ -210,14 +220,14 @@ if __name__ == '__main__':
     print("Lesk acc. dev: {}\t test: {}".format(accuracy(dev_key, lesk_pred_dev), accuracy(test_key, lesk_pred_test)))
 
     # All POS are varieties of noun!
-    # leskpos_pred_dev = lesks(dev_instances, lesk, pos=True)
-    # leskpos_pred_test = lesks(test_instances, lesk, pos=True)
-    # print("Lesk w/POS acc. dev: {}\t test: {}".format(accuracy(dev_key, leskpos_pred_dev), accuracy(test_key, leskpos_pred_test)))
+    leskpos_pred_dev = lesks(dev_instances, lesk, pos=True)
+    leskpos_pred_test = lesks(test_instances, lesk, pos=True)
+    print("Lesk w/POS acc. dev: {}\t test: {}".format(accuracy(dev_key, leskpos_pred_dev), accuracy(test_key, leskpos_pred_test)))
 
     depth_lesk_pred_dev = lesks(dev_instances, modified_lesk)
     depth_lesk_pred_test = lesks(test_instances, modified_lesk)
     print("Modified Lesk acc. dev: {}\t test: {}".format(accuracy(dev_key, depth_lesk_pred_dev), accuracy(test_key, depth_lesk_pred_test)))
 
-    # depth_leskpos_pred_dev = lesks(dev_instances, modified_lesk, pos=True)
-    # depth_leskpos_pred_test = lesks(test_instances, modified_lesk, pos=True)
-    # print("Modified Lesk w/POS acc. dev: {}\t test: {}".format(accuracy(dev_key, depth_lesk_pred_dev), accuracy(test_key, depth_lesk_pred_test)))
+    depth_leskpos_pred_dev = lesks(dev_instances, modified_lesk, pos=True)
+    depth_leskpos_pred_test = lesks(test_instances, modified_lesk, pos=True)
+    print("Modified Lesk w/POS acc. dev: {}\t test: {}".format(accuracy(dev_key, depth_leskpos_pred_dev), accuracy(test_key, depth_leskpos_pred_test)))
