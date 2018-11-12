@@ -187,7 +187,7 @@ def get_closest_lemma(word):
 	return difflib.get_close_matches(word, wn.all_lemma_names())[0]
 
 
-def get_lemma_classifiers(instances, keys, classifier=GaussianNB, binary=False, idf=True):
+def get_lemma_classifiers(instances, keys, classifier=MultinomialNB, binary=False, idf=True):
 	'''
 	:type instances: dict of WSDInstance
 	:type keys: dict of list
@@ -265,7 +265,7 @@ def mixed_lesk(context_sentence, ambiguous_word, clfs=None, pos=False):
 							count += len(set(ssdefsyn.definition().split()).intersection(condefsyn.definition().split()))
 			if clf and vct:
 				if ss.name() in clf.classes_:
-					count /= clf.predict_proba(vct.transform([context_sentence]).toarray())[0][np.where(clf.classes_ == ss.name())]
+					count /= (1-clf.predict_proba(vct.transform([context_sentence]).toarray())[0][np.where(clf.classes_ == ss.name())])
 			s.append((count, ss))
 		_, sense = max(s)
 
@@ -307,6 +307,18 @@ if __name__ == '__main__':
 	# for v in dev_instances.values():
 	#     txt += v.lemma + " "
 	# print(len(test_instances))
+	clfs = get_lemma_classifiers(dev_instances, dev_key)
+
+	mixed_lesk_pred_dev = mixed_lesk_instances(dev_instances, clfs)
+	mixed_lesk_pred_test = mixed_lesk_instances(test_instances, clfs)
+	print("Semi-weighted Lesk acc. dev: {}\t test: {}".format(
+		accuracy(dev_key, mixed_lesk_pred_dev), accuracy(test_key, mixed_lesk_pred_test)))
+
+
+	mixed_leskpos_pred_dev = mixed_lesk_instances(dev_instances, clfs, True)
+	mixed_leskpos_pred_test = mixed_lesk_instances(test_instances, clfs, True)
+	print("Semi-weighted Lesk w/POS acc. dev: {}\t test: {}".format(
+		accuracy(dev_key, mixed_leskpos_pred_dev), accuracy(test_key, mixed_leskpos_pred_test)))
 
 	baseline_pred_dev = most_frequent(dev_instances)
 	baseline_pred_test = most_frequent(test_instances)
@@ -329,15 +341,3 @@ if __name__ == '__main__':
 	depth_leskpos_pred_test = lesks(test_instances, modified_lesk, pos=True)
 	print("Modified Lesk w/POS acc. dev: {}\t test: {}".format(accuracy(dev_key, depth_leskpos_pred_dev), accuracy(test_key, depth_leskpos_pred_test)))
 
-	clfs = get_lemma_classifiers(dev_instances, dev_key)
-
-	mixed_lesk_pred_dev = mixed_lesk_instances(dev_instances, clfs)
-	mixed_lesk_pred_test = mixed_lesk_instances(test_instances, clfs)
-	print("Semi-weighted Lesk acc. dev: {}\t test: {}".format(
-		accuracy(dev_key, mixed_lesk_pred_dev), accuracy(test_key, mixed_lesk_pred_test)))
-
-
-	mixed_leskpos_pred_dev = mixed_lesk_instances(dev_instances, clfs, True)
-	mixed_leskpos_pred_test = mixed_lesk_instances(test_instances, clfs, True)
-	print("Semi-weighted Lesk w/POS acc. dev: {}\t test: {}".format(
-		accuracy(dev_key, mixed_leskpos_pred_dev), accuracy(test_key, mixed_leskpos_pred_test)))
